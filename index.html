@@ -1,0 +1,157 @@
+<!-- ...existing HTML content... -->
+<form id="order-form">
+  <h2 style="margin-bottom: 10px; color: #e91e63;">Place Your Order</h2>
+
+  <!-- Promo Banner -->
+  <div style="background: #ffe0e0; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-weight: bold; color: #b71c1c;">
+    🎉 Use code <strong>SALE50</strong> to get 50% off instantly!
+  </div>
+
+  <!-- Multiple Product Selection with Images -->
+  <label style="font-weight: bold;">Select Product:</label>
+  <select id="product" onchange="updateProductImage(); updatePrice();" required>
+    <option value="Running Shoes">Running Shoes</option>
+    <option value="Sneakers">Sneakers</option>
+    <option value="Formal Shoes">Formal Shoes</option>
+    <option value="Sandals">Sandals</option>
+  </select>
+  <div id="product-preview" style="margin: 15px 0;"></div>
+
+  <input type="text" id="name" placeholder="Your Name" required>
+  <input type="tel" id="phone" placeholder="Mobile Number" required>
+  <textarea id="address" rows="3" placeholder="Shipping Address" required></textarea>
+
+  <select id="size" required>
+    <option value="">Select Size</option>
+    <option value="6">6</option>
+    <option value="7">7</option>
+    <option value="8">8</option>
+    <option value="9">9</option>
+    <option value="10">10</option>
+  </select>
+
+  <input type="number" id="quantity" placeholder="Quantity" min="1" value="1" oninput="updatePrice()" required>
+
+  <!-- Coupon Code -->
+  <input type="text" id="coupon" placeholder="Coupon Code (Optional)" oninput="updatePrice()">
+
+  <label for="payment-method" style="margin-top: 10px; font-weight: bold; display: block;">Select Payment Method:</label>
+  <select id="payment-method" onchange="updatePrice()" required>
+    <option value="cod">Cash on Delivery (COD)</option>
+    <option value="online">Online Payment (Razorpay)</option>
+  </select>
+
+  <!-- Delivery Charges Message -->
+  <p id="delivery-charge-msg" style="font-size: 0.9em; color: #d81b60; display: none;">Note: ₹50 extra will be charged for COD.</p>
+
+  <!-- Dynamic Total Price -->
+  <p id="price-summary" style="font-size: 1em; font-weight: bold; color: #000; margin-top: 10px;"></p>
+
+  <button type="button" class="submit-btn" onclick="sendOrder()">Submit on WhatsApp</button>
+  <div id="confirmation-popup" style="display: none; margin-top: 15px; padding: 10px; background: #e0ffe0; border: 1px solid #4caf50; color: #2e7d32; font-weight: bold; border-radius: 8px;">✅ Order submitted successfully! We will contact you soon.</div>
+
+  <div id="pay-now-link" style="display: none;">
+    <p style="margin: 20px 0; font-weight: bold; color: #555;">or</p>
+    <a href="https://rzp.io/l/demoUPI" target="_blank" class="submit-btn" style="text-align: center; display: block; text-decoration: none; background-color: #2dce89;">Pay Now</a>
+    <p style="font-size: 0.8em; color: #555; margin-top: 5px;">UPI, Card & Netbanking accepted</p>
+  </div>
+
+  <!-- Optional: QR Code Display -->
+  <div id="qr-code" style="display: none; margin-top: 20px;">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/UPI-QR-code-sample.svg/200px-UPI-QR-code-sample.svg.png" alt="UPI QR Code" style="max-width: 150px;">
+    <p style="font-size: 0.8em; color: #555;">Scan to Pay</p>
+  </div>
+
+  <!-- Stock Countdown Timer -->
+  <div id="stock-timer" style="margin-top: 20px; font-size: 0.9em; color: #d81b60;"></div>
+</form>
+
+<script>
+  const productImageMap = {
+    "Running Shoes": "https://images.unsplash.com/photo-1600180758890-6d4eb5bafcd6?auto=format&fit=crop&w=400&q=80",
+    "Sneakers": "https://images.unsplash.com/photo-1614280283745-758d07cc3852?auto=format&fit=crop&w=400&q=80",
+    "Formal Shoes": "https://images.unsplash.com/photo-1595950653041-ec2e9d4c5a56?auto=format&fit=crop&w=400&q=80",
+    "Sandals": "https://images.unsplash.com/photo-1622814533080-5e5a0b5672d3?auto=format&fit=crop&w=400&q=80"
+  };
+
+  const productPriceMap = {
+    "Running Shoes": 1000,
+    "Sneakers": 1200,
+    "Formal Shoes": 1500,
+    "Sandals": 800
+  };
+
+  function updateProductImage() {
+    const product = document.getElementById('product').value;
+    const preview = document.getElementById('product-preview');
+    const imageUrl = productImageMap[product];
+    preview.innerHTML = `<img src="${imageUrl}" alt="${product}" style="max-width: 200px; border-radius: 8px;">`;
+  }
+
+  function updatePrice() {
+    const product = document.getElementById('product').value;
+    const quantity = parseInt(document.getElementById('quantity').value || 1);
+    const coupon = document.getElementById('coupon').value.trim().toUpperCase();
+    const payment = document.getElementById('payment-method').value;
+    const price = productPriceMap[product] || 0;
+
+    let total = price * quantity;
+    let discount = 0;
+    if (coupon === 'SALE50') discount = total * 0.5;
+    if (payment === 'cod') total += 50;
+
+    const final = total - discount;
+    document.getElementById('price-summary').textContent = `Total Price: ₹${final}`;
+  }
+
+  const paymentMethod = document.getElementById('payment-method');
+  const payNowLink = document.getElementById('pay-now-link');
+  const qrCode = document.getElementById('qr-code');
+  const deliveryMsg = document.getElementById('delivery-charge-msg');
+
+  paymentMethod.addEventListener('change', function () {
+    if (this.value === 'online') {
+      payNowLink.style.display = 'block';
+      qrCode.style.display = 'block';
+      deliveryMsg.style.display = 'none';
+    } else {
+      payNowLink.style.display = 'none';
+      qrCode.style.display = 'none';
+      deliveryMsg.style.display = 'block';
+    }
+  });
+
+  function sendOrder() {
+    const product = document.getElementById('product').value;
+    const name = document.getElementById('name').value;
+    const phone = document.getElementById('phone').value;
+    const address = document.getElementById('address').value;
+    const size = document.getElementById('size').value;
+    const quantity = document.getElementById('quantity').value;
+    const coupon = document.getElementById('coupon').value;
+    const payment = document.getElementById('payment-method').value;
+
+    const message = `New Shoe Order:%0AProduct: ${product}%0AName: ${name}%0APhone: ${phone}%0AAddress: ${address}%0ASize: ${size}%0AQuantity: ${quantity}%0ACoupon: ${coupon || 'N/A'}%0APayment Method: ${payment === 'cod' ? 'Cash on Delivery (₹50 extra)' : 'Online Payment'}`;
+    const whatsappNumber = '917985354954';
+
+    const url = `https://wa.me/${whatsappNumber}?text=${message}`;
+    window.open(url, '_blank');
+
+    document.getElementById('confirmation-popup').style.display = 'block';
+  }
+
+  // Stock Countdown Timer (ends in 10 minutes)
+  const timerEl = document.getElementById('stock-timer');
+  let timeLeft = 600;
+  const timer = setInterval(() => {
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    timerEl.textContent = `⏳ Hurry! Offer ends in ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+    timeLeft--;
+    if (timeLeft < 0) {
+      clearInterval(timer);
+      timerEl.textContent = '❌ This offer has expired!';
+    }
+  }, 1000);
+</script>
+<!-- ...end of HTML content... -->
